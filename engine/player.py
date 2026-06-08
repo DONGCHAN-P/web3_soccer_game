@@ -35,11 +35,13 @@ POSITION_SEC_ATTRS: Dict[str, list] = {
     "ST":  ["가속도", "공격 성향", "위치 선정"],
 }
 
-POSITION_DIST: Dict[str, float] = {
+_POSITION_DIST_RAW: Dict[str, float] = {
     "GK": 0.10, "CB": 0.20, "RB": 0.10, "LB": 0.10,
     "CDM": 0.10, "CM": 0.15, "CAM": 0.08,
     "RW": 0.07, "LW": 0.07, "ST": 0.08,
 }
+_dist_sum = sum(_POSITION_DIST_RAW.values())
+POSITION_DIST: Dict[str, float] = {k: v / _dist_sum for k, v in _POSITION_DIST_RAW.items()}
 
 FIFA_NATIONS = [
     "Argentina", "France", "Brazil", "England", "Belgium", "Croatia",
