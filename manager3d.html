@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>⚽ Soccer Manager 3D</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#0a0e1a;color:#d4dce8;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+button{cursor:pointer;border:none;font-family:inherit}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:2px}
+
+/* ── Nav ── */
+nav{background:#070b14;border-bottom:1px solid #1a2e4a;display:flex;align-items:center;padding:0 20px;gap:4px;height:46px;flex-shrink:0;z-index:10}
+.logo{color:#4fc3f7;font-weight:800;font-size:1rem;margin-right:16px}
+.tab{padding:0 14px;height:46px;display:flex;align-items:center;font-size:0.8rem;color:#6b8cae;border-bottom:2px solid transparent;transition:all .15s}
+.tab:hover{color:#9ab}
+.tab.active{color:#4fc3f7;border-bottom-color:#4fc3f7}
+.page{display:none;flex:1;overflow:hidden}
+.page.active{display:flex}
+
+/* ── Squad page ── */
+#squadPage{gap:0}
+.squad-left{width:340px;flex-shrink:0;border-right:1px solid #1a2e4a;display:flex;flex-direction:column;overflow:hidden}
+.sq-header{padding:14px 16px;border-bottom:1px solid #1a2e4a;display:flex;justify-content:space-between;align-items:center}
+.sq-header h2{font-size:0.88rem;color:#4fc3f7}
+.sq-header input{background:#111827;border:1px solid #1a2e4a;color:#d4dce8;padding:4px 9px;border-radius:5px;font-size:0.8rem;width:120px}
+.sq-toolbar{padding:8px 16px;border-bottom:1px solid #1a2e4a;display:flex;gap:7px}
+.btn-sm{padding:5px 11px;border-radius:5px;font-size:0.73rem;font-weight:600;background:#1a2e4a;color:#9ab}
+.btn-sm:hover{background:#243d5c}
+.btn-p{background:linear-gradient(135deg,#1565c0,#0d47a1);color:#fff}
+.btn-p:hover{background:linear-gradient(135deg,#1976d2,#1565c0)}
+.player-list{overflow-y:auto;flex:1}
+.prow{display:flex;align-items:center;gap:9px;padding:8px 16px;border-bottom:1px solid #0f1a2a;cursor:pointer;transition:background .1s}
+.prow:hover{background:#111827}
+.prow.sel{background:#142035;border-left:3px solid #4fc3f7}
+.pos-badge{width:34px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:3px;font-size:0.65rem;font-weight:700;flex-shrink:0}
+.pinfo{flex:1;min-width:0}
+.pname{font-size:0.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pnat{font-size:0.65rem;color:#6b8cae}
+.prat{font-size:0.88rem;font-weight:700;color:#4fc3f7}
+.tb{font-size:0.58rem;padding:1px 5px;border-radius:3px;font-weight:700}
+.squad-right{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.pitch-2d-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:20px}
+.pitch-2d{width:300px;height:430px;background:linear-gradient(180deg,#1a4a1a,#143d14);border:2px solid #2d6b2d;border-radius:7px;position:relative;flex-shrink:0}
+.pitch-2d::before{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:80px;height:80px;border:1px solid rgba(255,255,255,0.12);border-radius:50%}
+.pitch-2d::after{content:'';position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(255,255,255,0.1)}
+.pdot{position:absolute;transform:translate(-50%,-50%);cursor:pointer}
+.pdot-inner{width:36px;height:36px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:0.58rem;border:2px solid rgba(255,255,255,0.2);transition:transform .2s}
+.pdot:hover .pdot-inner{transform:scale(1.15)}
+.pdot-pos{font-size:0.55rem;color:rgba(255,255,255,0.65)}
+.pdot-rat{font-size:0.7rem;color:#fff;font-weight:800}
+.pdetail{padding:16px;border-top:1px solid #1a2e4a;background:#080c18;max-height:170px;overflow-y:auto}
+.pdetail h3{font-size:0.82rem;color:#4fc3f7;margin-bottom:10px}
+.dstats{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.ds{background:#111827;border-radius:4px;padding:4px 7px;text-align:center}
+.dv{font-size:0.85rem;font-weight:700}
+.dk{font-size:0.58rem;color:#6b8cae;margin-top:1px}
+
+/* ── Match page ── */
+#matchPage{flex-direction:column}
+.match-top{background:#070b14;border-bottom:1px solid #1a2e4a;padding:10px 20px;display:flex;align-items:center;gap:14px;flex-shrink:0}
+.scoreboard{display:flex;align-items:stretch;background:#111827;border:1px solid #1a2e4a;border-radius:9px;overflow:hidden}
+.sb-team{padding:8px 18px;text-align:center;min-width:130px}
+.sb-team .sn{font-size:0.72rem;color:#6b8cae}
+.sb-team .so{font-size:0.68rem;color:#4fc3f7;margin-top:2px}
+.sb-score{padding:6px 20px;font-size:2rem;font-weight:900;color:#fff;letter-spacing:5px;border-left:1px solid #1a2e4a;border-right:1px solid #1a2e4a;display:flex;align-items:center;min-width:90px;justify-content:center}
+.status{font-size:0.68rem;padding:3px 9px;border-radius:9px;font-weight:700}
+.st-idle{background:#1a2e4a;color:#6b8cae}
+.st-live{background:#c62828;color:#fff;animation:blink 1s infinite}
+.st-done{background:#1b5e20;color:#a5d6a7}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.5}}
+.match-body{flex:1;display:flex;min-height:0}
+#canvas3d{flex:1;display:block;cursor:grab}
+#canvas3d:active{cursor:grabbing}
+.ev-sidebar{width:260px;flex-shrink:0;border-left:1px solid #1a2e4a;display:flex;flex-direction:column;overflow:hidden}
+.ev-head{padding:10px 14px;border-bottom:1px solid #1a2e4a;font-size:0.72rem;color:#6b8cae;text-transform:uppercase;letter-spacing:1px;display:flex;justify-content:space-between;align-items:center}
+.ev-list{flex:1;overflow-y:auto;padding:6px 0}
+.ev-item{display:flex;gap:9px;padding:6px 14px;border-bottom:1px solid #0a1020;animation:fadeIn .25s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+.ev-min{font-size:0.65rem;color:#6b8cae;width:26px;flex-shrink:0;padding-top:2px}
+.ev-desc{font-size:0.74rem;line-height:1.4}
+.ev-goal .ev-desc{color:#64b5f6;font-weight:600}
+.ev-save .ev-desc{color:#80cbc4}
+.ev-miss .ev-desc,.ev-tackle .ev-desc{color:#546e7a}
+.match-bottom{padding:12px 20px;border-top:1px solid #1a2e4a;background:#080c18;display:flex;gap:10px;align-items:center;flex-shrink:0}
+.btn-kick{background:linear-gradient(135deg,#c62828,#b71c1c);color:#fff;padding:9px 22px;border-radius:7px;font-weight:700;font-size:0.85rem}
+.btn-kick:hover{background:linear-gradient(135deg,#d32f2f,#c62828)}
+.btn-kick:disabled{background:#1a2e4a;color:#546e7a;cursor:not-allowed}
+.spd-grp{display:flex;gap:3px}
+.spd-btn{background:#1a2e4a;color:#6b8cae;padding:5px 9px;border-radius:4px;font-size:0.7rem}
+.spd-btn.active{background:#243d5c;color:#4fc3f7;font-weight:700}
+.prog-wrap{flex:1;background:#1a2e4a;border-radius:3px;height:5px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,#1976d2,#4fc3f7);border-radius:3px;transition:width .3s}
+.min-lbl{font-size:0.7rem;color:#6b8cae;min-width:30px;text-align:right}
+.c-gk{background:#7b1fa2;color:#fff}
+.c-def{background:#1565c0;color:#fff}
+.c-mid{background:#2e7d32;color:#fff}
+.c-atk{background:#bf360c;color:#fff}
+.t-N{background:#1a2e4a;color:#9ab}
+.t-S{background:#1a3a1a;color:#81c784}
+.t-R{background:#1a1a3a;color:#90caf9}
+.t-W{background:#2a1a00;color:#ffcc02}
+.t-G{background:#2a0a0a;color:#f48fb1}
+</style>
+</head>
+<body>
+<nav>
+  <div class="logo">⚽ SoccerManager 3D</div>
+  <button class="tab active" onclick="showPage('squad')">스쿼드</button>
+  <button class="tab" onclick="showPage('match')">경기</button>
+  <div style="flex:1"></div>
+  <span id="navName" style="font-size:0.75rem;color:#6b8cae"></span>
+</nav>
+
+<!-- SQUAD PAGE -->
+<div class="page active" id="squadPage">
+  <div class="squad-left">
+    <div class="sq-header">
+      <h2>스쿼드</h2>
+      <input id="teamName" value="Alpha FC" oninput="updateName()"/>
+    </div>
+    <div class="sq-toolbar">
+      <button class="btn-sm" onclick="regenSquad()">🎲 재생성</button>
+      <button class="btn-sm btn-p" onclick="showPage('match')">▶ 경기하기</button>
+    </div>
+    <div class="player-list" id="playerList"></div>
+  </div>
+  <div class="squad-right">
+    <div class="pitch-2d-wrap"><div class="pitch-2d" id="pitch2d"></div></div>
+    <div class="pdetail" id="pdetail"><div style="color:#546e7a;font-size:0.78rem;text-align:center;padding:8px">선수를 클릭해 스탯을 확인하세요</div></div>
+  </div>
+</div>
+
+<!-- MATCH PAGE -->
+<div class="page" id="matchPage">
+  <div class="match-top">
+    <div class="scoreboard">
+      <div class="sb-team"><div class="sn" id="sbH">—</div><div class="so" id="sbHov"></div></div>
+      <div class="sb-score" id="sbScr">0 : 0</div>
+      <div class="sb-team"><div class="sn" id="sbA">—</div><div class="so" id="sbAov"></div></div>
+    </div>
+    <span class="status st-idle" id="mStatus">대기</span>
+    <div style="flex:1"></div>
+    <div style="font-size:0.72rem;color:#6b8cae">드래그: 카메라 회전 &nbsp;|&nbsp; 스크롤: 줌</div>
+  </div>
+  <div class="match-body">
+    <canvas id="canvas3d"></canvas>
+    <div class="ev-sidebar">
+      <div class="ev-head"><span>이벤트</span><span id="possStat" style="color:#4fc3f7;font-weight:700"></span></div>
+      <div class="ev-list" id="evList"><div style="padding:16px;color:#546e7a;font-size:0.76rem;text-align:center">경기를 시작하면 이벤트가 여기 나타납니다</div></div>
+    </div>
+  </div>
+  <div class="match-bottom">
+    <button class="btn-kick" id="kickBtn" onclick="startMatch()">⚽ 킥오프</button>
+    <div class="spd-grp">
+      <button class="spd-btn active" onclick="setSpd(1,this)">1×</button>
+      <button class="spd-btn" onclick="setSpd(3,this)">3×</button>
+      <button class="spd-btn" onclick="setSpd(10,this)">10×</button>
+    </div>
+    <div class="prog-wrap"><div class="prog-fill" id="progFill" style="width:0"></div></div>
+    <div class="min-lbl" id="minLbl">0'</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// SIMULATION ENGINE (JS port of Python match_engine.py)
+// ═══════════════════════════════════════════════════════════════════
+const PHASES=30,PSC=0.06,CSC=0.05,MXC=0.72,SW=0.005,SB=0.25,GW=0.007,GB=0.20;
+const FORM=['GK','CB','CB','RB','LB','CDM','CM','CM','RW','LW','ST'];
+const PM={GK:['반사 신경','다이빙','핸들링','1대1 방어'],CB:['태클','헤딩','인터셉트','힘'],RB:['속도','태클','크로스','스태미너'],LB:['속도','태클','크로스','스태미너'],CDM:['태클','인터셉트','경기 지능','위치 선정'],CM:['패스','경기 지능','퍼스트 터치','위치 선정'],RW:['속도','드리블','크로스','민첩성'],LW:['속도','드리블','크로스','민첩성'],ST:['슛 정확도','헤딩','공간 침투','균형 감각']};
+const PS={GK:['킥 능력','반응 속도','펀칭'],CB:['침착함','균형감각','패스'],RB:['인터셉트','드리블','민첩성'],LB:['인터셉트','드리블','민첩성'],CDM:['팀워크','수비 성향','스태미너'],CM:['킥 능력','공간 침투','체력 회복력'],RW:['슛 정확도','퍼스트 터치','가속력'],LW:['슛 정확도','퍼스트 터치','가속력'],ST:['가속도','공격 성향','위치 선정']};
+const GKS=['반사 신경','다이빙','핸들링','1대1 방어'],DS=['태클','인터셉트','헤딩','힘','위치 선정'],MS=['패스','경기 지능','위치 선정','퍼스트 터치','스태미너'],AS=['드리블','속도','공간 침투','민첩성','가속력'],SS=['슛 정확도','공격 성향'];
+const ALLAT=['1대1 방어','가속력','가속도','경기 지능','공간 침투','공격 성향','균형 감각','균형감각','다이빙','드리블','민첩성','반사 신경','반응 속도','수비 성향','스태미너','슛 정확도','위치 선정','인터셉트','체력 회복력','침착함','크로스','킥 능력','태클','팀워크','패스','펀칭','퍼스트 터치','핸들링','헤딩','힘','속도','점프력','리더십'];
+const NATS=['Argentina','France','Brazil','England','Spain','Germany','Portugal','Italy','Netherlands','Belgium','Croatia','Japan','South Korea','Mexico','Morocco','USA','Colombia','Denmark','Sweden','Poland','Switzerland','Chile','Turkey','Serbia'];
+
+function rng(){return Math.random()}
+function ri(a,b){return Math.floor(rng()*(b-a+1))+a}
+function cl(v,lo,hi){return Math.max(lo,Math.min(hi,v))}
+function nr(m,s){let u=0,v=0;while(!u)u=rng();while(!v)v=rng();return m+s*Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function sig(d,s){return 0.2+(1/(1+Math.exp(-d*s)))*0.6}
+function s2p(st,w,b,lo=.2,hi=.85){return cl(st*w+b,lo,hi)}
+
+let pidSeq=1;
+function gp(pos){
+  const main=PM[pos]||[],sec=PS[pos]||[];
+  const stats={},mv=[],sv=[];
+  for(const a of ALLAT){
+    let v;
+    if(main.includes(a)){v=Math.round(cl(nr(70,30),38,99));mv.push(v);}
+    else if(sec.includes(a)){v=Math.round(cl(nr(60,20),35,90));sv.push(v);}
+    else v=Math.round(cl(nr(35,20),1,80));
+    stats[a]=v;
+  }
+  const am=mv.length?mv.reduce((a,b)=>a+b,0)/mv.length*.7:0;
+  const as=sv.length?sv.reduce((a,b)=>a+b,0)/sv.length*.3:0;
+  const rating=Math.round((am+as)*10)/10;
+  const tier=rating<60?'N':rating<70?'S':rating<80?'R':rating<90?'W':'G';
+  return{id:pidSeq++,pos,stats,rating,tier,nat:NATS[ri(0,Math.min(Math.floor(rating/4),NATS.length-1))]};
+}
+function genSq(){return FORM.map(p=>gp(p))}
+function avgSt(pl,attrs){const v=pl.flatMap(p=>attrs.map(a=>p.stats[a]??40));return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length*10)/10:50}
+function getStr(pl){
+  const gk=pl.filter(p=>p.pos==='GK'),def=pl.filter(p=>['CB','RB','LB'].includes(p.pos)),mid=pl.filter(p=>['CDM','CM'].includes(p.pos)),atk=pl.filter(p=>['RW','LW','ST'].includes(p.pos));
+  return{goalkeeping:avgSt(gk,GKS),defense:avgSt(def,DS),midfield:avgSt(mid,MS),attack:avgSt(atk,AS),shooting:avgSt([...atk,...mid],SS)};
+}
+function ov(pl){return Math.round(pl.reduce((a,p)=>a+p.rating,0)/pl.length*10)/10}
+
+function simulate(h,a,hn,an){
+  const hs=getStr(h),as=getStr(a),evs=[];
+  let hs0=0,as0=0,hsh=0,ash=0,hon=0,aon=0,hpc=0;
+  for(let ph=0;ph<PHASES;ph++){
+    const min=ph*3+ri(1,3);
+    const hpp=sig(hs.midfield-as.midfield,PSC);
+    let atk,def,aname,dname,side;
+    if(rng()<hpp){atk=hs;def=as;aname=hn;dname=an;side='home';hpc++;}
+    else{atk=as;def=hs;aname=an;dname=hn;side='away';}
+    const ap=atk.attack*.65+atk.midfield*.35,dp=def.defense*.75+def.midfield*.25;
+    let cp=Math.min(sig(ap-dp,CSC),MXC);
+    if(rng()>cp){if(rng()<.3)evs.push({min,type:'tackle',side:'defense',desc:`🛡️ ${dname} 수비 차단`});continue;}
+    if(side==='home')hsh++;else ash++;
+    const sp=s2p(atk.shooting,SW,SB,.30,.70);
+    if(rng()>sp){evs.push({min,type:'miss',side,desc:`💨 ${aname} 슈팅 빗나감`});continue;}
+    if(side==='home')hon++;else aon++;
+    const gk=s2p(def.goalkeeping,GW,GB,.50,.80);
+    if(rng()>gk){
+      if(side==='home')hs0++;else as0++;
+      evs.push({min,type:'goal',side,desc:`⚽ ${aname} 골! (${hs0}-${as0})`});
+    }else{evs.push({min,type:'save',side:'defense',desc:`🧤 ${dname} 골키퍼 선방!`});}
+  }
+  return{hs0,as0,hsh,ash,hon,aon,hPoss:Math.round(hpc/PHASES*100),evs,hStr:hs,aStr:as};
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// THREE.JS CONSTANTS — FIFA standard pitch in meters (1 unit = 1 m)
+// ═══════════════════════════════════════════════════════════════════
+const PITCH_L=105, PITCH_W=68;   // length(z), width(x)
+const PH=52.5, PW=34;            // half dimensions
+
+// Formation positions [x,z] — home attacks toward +z
+const POS3D={
+  GK:[0,-46],
+  LB:[-21,-36],CB0:[-8,-39],CB1:[8,-39],RB:[21,-36],
+  CDM:[0,-25],
+  CM0:[-12,-14],CM1:[12,-14],
+  LW:[-26,0],RW:[26,0],ST:[0,10]
+};
+function getPos3D(pos,cnt){
+  if(pos==='CB')return POS3D['CB'+(cnt%2)];
+  if(pos==='CM')return POS3D['CM'+(cnt%2)];
+  return POS3D[pos]||[0,0];
+}
+
+// ── Scene state ──────────────────────────────────────────────────
+let renderer,scene,camera,animFrame;
+let mouseDown=false,lastMX=0,lastMY=0;
+let camTheta=0,camPhi=0.78,camDist=92;
+let ballMesh,ballTarget={x:0,y:0.5,z:0};
+let homeFigures=[],awayFigures=[];
+let lastTime=0;
+
+// ═══════════════════════════════════════════════════════════════════
+// INIT THREE.JS
+// ═══════════════════════════════════════════════════════════════════
+function initThree(){
+  const canvas=document.getElementById('canvas3d');
+  renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+  renderer.shadowMap.enabled=true;
+  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  resizeRenderer();
+
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x0d111f);
+  scene.fog=new THREE.FogExp2(0x0d111f,0.004);
+
+  const w=renderer.domElement.width||800,h=renderer.domElement.height||500;
+  camera=new THREE.PerspectiveCamera(48,w/h,0.1,500);
+  updateCamera();
+
+  // ── Lighting ──────────────────────────────────────────────────
+  const amb=new THREE.AmbientLight(0x334466,0.9);
+  scene.add(amb);
+
+  // Main directional (shadow caster)
+  const sun=new THREE.DirectionalLight(0xfff8e0,1.1);
+  sun.position.set(40,90,30);
+  sun.castShadow=true;
+  sun.shadow.mapSize.set(2048,2048);
+  sun.shadow.camera.left=-80;sun.shadow.camera.right=80;
+  sun.shadow.camera.top=70;sun.shadow.camera.bottom=-70;
+  sun.shadow.camera.near=10;sun.shadow.camera.far=250;
+  scene.add(sun);
+
+  // Fill lights from opposite floodlight angles
+  const f1=new THREE.DirectionalLight(0x6688bb,0.45);
+  f1.position.set(-50,60,-40);scene.add(f1);
+  const f2=new THREE.DirectionalLight(0x6688bb,0.35);
+  f2.position.set(50,60,40);scene.add(f2);
+
+  buildPitch();
+  buildStadium();
+  buildFloodlightTowers();
+  buildBall();
+
+  // ── Mouse / touch controls ─────────────────────────────────────
+  canvas.addEventListener('mousedown',e=>{mouseDown=true;lastMX=e.clientX;lastMY=e.clientY});
+  canvas.addEventListener('mousemove',e=>{
+    if(!mouseDown)return;
+    camTheta-=(e.clientX-lastMX)*0.005;
+    camPhi=cl(camPhi+(e.clientY-lastMY)*0.004,0.15,1.4);
+    lastMX=e.clientX;lastMY=e.clientY;updateCamera();
+  });
+  canvas.addEventListener('mouseup',()=>mouseDown=false);
+  canvas.addEventListener('mouseleave',()=>mouseDown=false);
+  canvas.addEventListener('wheel',e=>{
+    camDist=cl(camDist+e.deltaY*0.06,30,200);
+    updateCamera();e.preventDefault();
+  },{passive:false});
+  let lastTD=null;
+  canvas.addEventListener('touchstart',e=>{if(e.touches.length===1){lastMX=e.touches[0].clientX;lastMY=e.touches[0].clientY;mouseDown=true;}lastTD=null;},{passive:true});
+  canvas.addEventListener('touchmove',e=>{
+    if(e.touches.length===1&&mouseDown){camTheta-=(e.touches[0].clientX-lastMX)*0.005;camPhi=cl(camPhi+(e.touches[0].clientY-lastMY)*0.004,0.15,1.4);lastMX=e.touches[0].clientX;lastMY=e.touches[0].clientY;updateCamera();}
+    if(e.touches.length===2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);if(lastTD!==null){camDist=cl(camDist+(lastTD-d)*0.06,30,200);updateCamera();}lastTD=d;}
+  },{passive:true});
+  canvas.addEventListener('touchend',()=>{mouseDown=false;lastTD=null;},{passive:true});
+
+  animate(0);
+  window.addEventListener('resize',resizeRenderer);
+}
+
+function updateCamera(){
+  const x=camDist*Math.sin(camPhi)*Math.sin(camTheta);
+  const y=camDist*Math.cos(camPhi);
+  const z=camDist*Math.sin(camPhi)*Math.cos(camTheta);
+  camera.position.set(x,y,z);
+  camera.lookAt(0,2,0);
+}
+
+function resizeRenderer(){
+  if(!renderer)return;
+  const canvas=document.getElementById('canvas3d');
+  if(!canvas.parentElement)return;
+  const pw=canvas.parentElement.clientWidth;
+  const w=(pw>50?pw:window.innerWidth)-260;
+  const h=canvas.parentElement.clientHeight||window.innerHeight-120;
+  renderer.setSize(w,h);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  if(camera){camera.aspect=w/h;camera.updateProjectionMatrix();}
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// BUILD PITCH — FIFA 105 × 68 m with all official markings
+// ═══════════════════════════════════════════════════════════════════
+function buildPitch(){
+  // ── Dark surround ────────────────────────────────────────────
+  const surround=new THREE.Mesh(
+    new THREE.PlaneGeometry(PITCH_L+24,PITCH_W+24),
+    new THREE.MeshLambertMaterial({color:0x111711})
+  );
+  surround.rotation.x=-Math.PI/2;surround.position.y=-0.02;
+  scene.add(surround);
+
+  // ── Grass stripes (10 alternating along z-axis) ───────────────
+  const sL=PITCH_L/10; // 10.5 m per stripe
+  for(let i=0;i<10;i++){
+    const stripe=new THREE.Mesh(
+      new THREE.PlaneGeometry(PITCH_W,sL*0.99),
+      new THREE.MeshLambertMaterial({color:i%2===0?0x2e7d32:0x388e3c})
+    );
+    stripe.rotation.x=-Math.PI/2;
+    stripe.position.set(0,0.001,-PH+sL*(i+0.5));
+    scene.add(stripe);
+  }
+
+  // ── Line material ──────────────────────────────────────────────
+  const lm=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.85});
+  const lm2=new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:0.85});
+
+  function rline(ww,dd,x,z){ // rectangle line (x=width-extent, z=depth-extent)
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(ww,dd),lm);
+    m.rotation.x=-Math.PI/2;m.position.set(x,0.015,z);scene.add(m);
+  }
+  function arc(pts){
+    const geo=new THREE.BufferGeometry().setFromPoints(pts);
+    const ln=new THREE.Line(geo,lm2);ln.position.y=0.015;scene.add(ln);
+  }
+
+  // ── Boundary lines ────────────────────────────────────────────
+  rline(PITCH_W,0.12,0,-PH+0.06);   // goal line (home)
+  rline(PITCH_W,0.12,0, PH-0.06);   // goal line (away)
+  rline(0.12,PITCH_L,-PW+0.06,0);   // left touchline
+  rline(0.12,PITCH_L, PW-0.06,0);   // right touchline
+  rline(PITCH_W,0.12,0,0);           // halfway line
+
+  // ── Center circle r=9.15 m ────────────────────────────────────
+  const ccPts=[];
+  for(let i=0;i<=64;i++){const a=i/64*Math.PI*2;ccPts.push(new THREE.Vector3(Math.cos(a)*9.15,0,Math.sin(a)*9.15));}
+  arc(ccPts);
+  // Center dot
+  const cdot=new THREE.Mesh(new THREE.CircleGeometry(0.3,10),lm);
+  cdot.rotation.x=-Math.PI/2;cdot.position.y=0.015;scene.add(cdot);
+
+  // ── Penalty areas (40.32 × 16.5 m) ───────────────────────────
+  // Home penalty area: z from -PH to -PH+16.5 = -36
+  const pa_z_home=-PH+16.5;  // -36
+  const pa_x=20.16;
+  rline(40.32,0.12,0,pa_z_home);             // far edge
+  rline(0.12,16.5,-pa_x,-PH+8.25);          // left side
+  rline(0.12,16.5, pa_x,-PH+8.25);          // right side
+
+  const pa_z_away=PH-16.5;   // 36
+  rline(40.32,0.12,0,pa_z_away);
+  rline(0.12,16.5,-pa_x, PH-8.25);
+  rline(0.12,16.5, pa_x, PH-8.25);
+
+  // ── Goal areas (18.32 × 5.5 m) ───────────────────────────────
+  const ga_x=9.16,ga_z_home=-PH+5.5,ga_z_away=PH-5.5;
+  rline(18.32,0.12,0,ga_z_home);
+  rline(0.12,5.5,-ga_x,-PH+2.75);
+  rline(0.12,5.5, ga_x,-PH+2.75);
+  rline(18.32,0.12,0,ga_z_away);
+  rline(0.12,5.5,-ga_x, PH-2.75);
+  rline(0.12,5.5, ga_x, PH-2.75);
+
+  // ── Penalty spots (11 m from goal line) ──────────────────────
+  function pspot(z){
+    const m=new THREE.Mesh(new THREE.CircleGeometry(0.25,10),lm);
+    m.rotation.x=-Math.PI/2;m.position.set(0,0.015,z);scene.add(m);
+  }
+  pspot(-PH+11); // home: z=-41.5
+  pspot( PH-11); // away: z=+41.5
+
+  // ── D-arcs (r=9.15m, outside penalty area) ───────────────────
+  const da=Math.asin(5.5/9.15); // ~36.9°
+  // Home D-arc: penalty spot at z=-41.5, show where z > -36
+  const dp_h=[]; for(let i=0;i<=32;i++){const a=da+(i/32)*(Math.PI-2*da);dp_h.push(new THREE.Vector3(9.15*Math.cos(a),0,-41.5+9.15*Math.sin(a)));} arc(dp_h);
+  // Away D-arc: penalty spot at z=+41.5, show where z < 36
+  const dp_a=[]; for(let i=0;i<=32;i++){const a=da+(i/32)*(Math.PI-2*da);dp_a.push(new THREE.Vector3(9.15*Math.cos(a),0,41.5-9.15*Math.sin(a)));} arc(dp_a);
+
+  // ── Corner arcs (r=1 m) ──────────────────────────────────────
+  const corners=[{cx:-PW,cz:-PH,a0:0,a1:Math.PI/2},{cx:PW,cz:-PH,a0:Math.PI/2,a1:Math.PI},{cx:PW,cz:PH,a0:Math.PI,a1:Math.PI*1.5},{cx:-PW,cz:PH,a0:Math.PI*1.5,a1:Math.PI*2}];
+  corners.forEach(({cx,cz,a0,a1})=>{
+    const pts=[];for(let i=0;i<=16;i++){const a=a0+(i/16)*(a1-a0);pts.push(new THREE.Vector3(cx+Math.cos(a),0,cz+Math.sin(a)));}arc(pts);
+  });
+
+  // ── Goals (7.32 × 2.44 m) ────────────────────────────────────
+  buildGoal(-PH,-1);  // home goal (home end, facing +z)
+  buildGoal( PH, 1);  // away goal
+}
+
+function buildGoal(gz,dir){
+  const mat=new THREE.MeshLambertMaterial({color:0xdddddd});
+  const W=3.66,H=2.44,D=2.0,R=0.08;
+  function bar(w,h,d,x,y,z){
+    const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);
+    m.position.set(x,y,gz+dir*(d/2));m.castShadow=true;scene.add(m);
+  }
+  // Crossbar
+  bar(W*2+R*2,R*2,R*2,0,H,0);
+  // Left post
+  bar(R*2,H,R*2,-W,H/2,0);
+  // Right post
+  bar(R*2,H,R*2, W,H/2,0);
+  // Back post (depth)
+  bar(R*2,H,D,-W,H/2,dir*D/2-dir*R);
+  bar(R*2,H,D, W,H/2,dir*D/2-dir*R);
+  // Top back bar
+  bar(W*2+R*2,R*2,D,0,H,dir*D/2-dir*R);
+  // Net (semi-transparent)
+  const netMat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.08,side:THREE.DoubleSide,wireframe:true});
+  const netBack=new THREE.Mesh(new THREE.PlaneGeometry(W*2,H),netMat);
+  netBack.rotation.x=-Math.PI/2;
+  netBack.position.set(0,H/2,gz+dir*(D+R));
+  netBack.rotation.x=0;scene.add(netBack);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// STADIUM — 4 stands with inclined surfaces + crowd InstancedMesh
+// ═══════════════════════════════════════════════════════════════════
+function buildStadium(){
+  // ── Track / pitch border ──────────────────────────────────────
+  const trackMat=new THREE.MeshLambertMaterial({color:0x0e180e});
+  const track=new THREE.Mesh(new THREE.PlaneGeometry(PITCH_L+16,PITCH_W+16),trackMat);
+  track.rotation.x=-Math.PI/2;track.position.set(0,-0.01,0);scene.add(track);
+
+  // Stand surface quads (inclined, using BufferGeometry)
+  function addStand(verts,color){
+    const v=new Float32Array(verts.flat());
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.BufferAttribute(v,3));
+    // Two triangles forming the quad
+    geo.setIndex([0,1,2,0,2,3]);
+    geo.computeVertexNormals();
+    const mesh=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color,side:THREE.DoubleSide}));
+    mesh.receiveShadow=true;
+    scene.add(mesh);
+  }
+
+  // Long sides: front at x=±40, back at x=±60, height 0→16
+  // South stand (x<0, home fans — blue)
+  addStand([[-40,0.5,-57],[-40,0.5,57],[-60,16,57],[-60,16,-57]],0x0d1520);
+  // North stand (x>0, away fans — dark red)
+  addStand([[40,0.5,-57],[60,16,-57],[60,16,57],[40,0.5,57]],0x150c0c);
+  // East end (z>0)
+  addStand([[-43,0.5,57],[43,0.5,57],[43,14,74],[-43,14,74]],0x111520);
+  // West end (z<0)
+  addStand([[-43,0.5,-57],[-43,14,-74],[43,14,-74],[43,0.5,-57]],0x111520);
+
+  // ── Stand roofs ───────────────────────────────────────────────
+  const roofMat=new THREE.MeshLambertMaterial({color:0x1a1a2a,side:THREE.DoubleSide,transparent:true,opacity:0.92});
+  function addRoof(w,d,x,y,z,ry=0){
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),roofMat);
+    m.rotation.x=-Math.PI/2;m.rotation.z=ry;m.position.set(x,y,z);scene.add(m);
+  }
+  addRoof(18,118,50,17,0);   // north roof overhang
+  addRoof(18,118,-50,17,0);  // south roof overhang
+  addRoof(118,18,0,14,66);   // east end roof
+  addRoof(118,18,0,14,-66);  // west end roof
+
+  // ── Crowd ─────────────────────────────────────────────────────
+  buildCrowd();
+}
+
+function buildCrowd(){
+  const dummy=new THREE.Object3D();
+  const sphereGeo=new THREE.SphereGeometry(0.5,4,3);
+
+  // Helper: create InstancedMesh crowd for one stand section
+  function addCrowdSection(count,posFn,colorFn){
+    const mat=new THREE.MeshLambertMaterial({color:0xffffff});
+    const mesh=new THREE.InstancedMesh(sphereGeo,mat,count);
+    const col=new THREE.Color();
+    for(let i=0;i<count;i++){
+      const p=posFn(i);
+      dummy.position.set(p.x,p.y,p.z);
+      dummy.scale.setScalar(1);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i,dummy.matrix);
+      col.setHex(colorFn(i));
+      mesh.setColorAt(i,col);
+    }
+    mesh.instanceMatrix.needsUpdate=true;
+    if(mesh.instanceColor)mesh.instanceColor.needsUpdate=true;
+    scene.add(mesh);
+  }
+
+  // South stand (x<0, home, blue shades)
+  const homeColors=[0x1565c0,0x1976d2,0x0d47a1,0x42a5f5,0x1e3a8a,0x2563eb,0x1e40af];
+  const ROWS_L=14,COLS_L=32;
+  addCrowdSection(ROWS_L*COLS_L,(i)=>{
+    const r=Math.floor(i/COLS_L),c=i%COLS_L;
+    const t=r/(ROWS_L-1);
+    const x=-41-t*17;
+    const y=1.8+t*14.5;
+    const z=-50+c*(100/(COLS_L-1));
+    return{x,y,z};
+  },(i)=>homeColors[Math.floor(Math.random()*homeColors.length)]);
+
+  // North stand (x>0, away, red shades)
+  const awayColors=[0xc62828,0xb71c1c,0xd32f2f,0xef5350,0x7f1d1d,0x991b1b,0xdc2626];
+  addCrowdSection(ROWS_L*COLS_L,(i)=>{
+    const r=Math.floor(i/COLS_L),c=i%COLS_L;
+    const t=r/(ROWS_L-1);
+    const x=41+t*17;
+    const y=1.8+t*14.5;
+    const z=-50+c*(100/(COLS_L-1));
+    return{x,y,z};
+  },(i)=>awayColors[Math.floor(Math.random()*awayColors.length)]);
+
+  // End stands (neutral — grey/mixed)
+  const neutColors=[0x374151,0x4b5563,0x6b7280,0x1f2937,0x3730a3,0x1e3a5f];
+  const ROWS_E=10,COLS_E=26;
+  // East end (z>0)
+  addCrowdSection(ROWS_E*COLS_E,(i)=>{
+    const r=Math.floor(i/COLS_E),c=i%COLS_E;
+    const t=r/(ROWS_E-1);
+    const z=58+t*14;
+    const y=1.8+t*12;
+    const x=-38+c*(76/(COLS_E-1));
+    return{x,y,z};
+  },(i)=>neutColors[Math.floor(Math.random()*neutColors.length)]);
+  // West end (z<0)
+  addCrowdSection(ROWS_E*COLS_E,(i)=>{
+    const r=Math.floor(i/COLS_E),c=i%COLS_E;
+    const t=r/(ROWS_E-1);
+    const z=-58-t*14;
+    const y=1.8+t*12;
+    const x=-38+c*(76/(COLS_E-1));
+    return{x,y,z};
+  },(i)=>neutColors[Math.floor(Math.random()*neutColors.length)]);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FLOODLIGHT TOWERS — 4 corner poles
+// ═══════════════════════════════════════════════════════════════════
+function buildFloodlightTowers(){
+  const poleMat=new THREE.MeshLambertMaterial({color:0x888888});
+  const fixMat=new THREE.MeshLambertMaterial({color:0xaaaaaa});
+  const bulbMat=new THREE.MeshBasicMaterial({color:0xfffde7});
+
+  [[-62,-60],[62,-60],[62,60],[-62,60]].forEach(([tx,tz])=>{
+    // Main pole
+    const pole=new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.8,40,8),poleMat);
+    pole.position.set(tx,20,tz);pole.castShadow=true;scene.add(pole);
+    // Cross arm
+    const arm=new THREE.Mesh(new THREE.BoxGeometry(5,0.5,0.5),fixMat);
+    arm.position.set(tx,40,tz);scene.add(arm);
+    // Light cluster (4 bulbs)
+    [[-1.5,0],[-0.5,0],[0.5,0],[1.5,0]].forEach(([bx,bz])=>{
+      const bulb=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.4,0.7),bulbMat);
+      bulb.position.set(tx+bx,39.8,tz+bz);scene.add(bulb);
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// BALL
+// ═══════════════════════════════════════════════════════════════════
+function buildBall(){
+  const geo=new THREE.SphereGeometry(0.55,14,10);
+  const mat=new THREE.MeshPhongMaterial({color:0xffffff,shininess:80,emissive:0x111111});
+  ballMesh=new THREE.Mesh(geo,mat);
+  ballMesh.castShadow=true;
+  ballMesh.position.set(0,0.55,0);
+  scene.add(ballMesh);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// PLAYER FIGURE — humanoid rig with articulated joints
+// No CapsuleGeometry (r128) → CylinderGeometry + SphereGeometry
+// ═══════════════════════════════════════════════════════════════════
+class PlayerFigure{
+  constructor(teamColor,isHome){
+    this.teamColor=teamColor;
+    this.isHome=isHome;
+    this.group=new THREE.Group();
+    this.targetX=0;this.targetZ=0;
+    this.curX=0;this.curZ=0;
+    this.speed=0;
+    this.animPhase=Math.random()*Math.PI*2;
+    this._build();
+    scene.add(this.group);
+  }
+
+  _build(){
+    const tc=this.teamColor;
+    const skin=0xd4956a,shorts=0xfafafa,sock=0xffffff,shoe=0x111111;
+    const armC=tc,torsoC=tc;
+
+    function cyl(rt,rb,h,segs,col,py,parent){
+      const m=new THREE.Mesh(
+        new THREE.CylinderGeometry(rt,rb,h,segs),
+        new THREE.MeshPhongMaterial({color:col,shininess:30})
+      );
+      m.position.y=py;m.castShadow=true;
+      parent.add(m);return m;
+    }
+    function sph(r,col,py,parent){
+      const m=new THREE.Mesh(
+        new THREE.SphereGeometry(r,8,6),
+        new THREE.MeshPhongMaterial({color:col,shininess:20})
+      );
+      m.position.y=py;m.castShadow=true;
+      parent.add(m);return m;
+    }
+
+    const g=this.group;
+
+    // ── Torso ────────────────────────────────────────────────────
+    this.torso=cyl(0.26,0.28,0.62,7,torsoC,1.16,g);
+
+    // ── Head ─────────────────────────────────────────────────────
+    sph(0.34,skin,1.78,g);
+    // Hair (dark cap)
+    const hairGeo=new THREE.SphereGeometry(0.355,8,4,0,Math.PI*2,0,Math.PI*0.55);
+    const hair=new THREE.Mesh(hairGeo,new THREE.MeshPhongMaterial({color:0x1a0800}));
+    hair.position.y=1.82;g.add(hair);
+
+    // ── Shorts ───────────────────────────────────────────────────
+    cyl(0.27,0.25,0.3,7,shorts,0.87,g);
+
+    // ── Left arm (shoulder pivot) ─────────────────────────────
+    this.lShoulderPivot=new THREE.Group();
+    this.lShoulderPivot.position.set(-0.32,1.42,0);
+    g.add(this.lShoulderPivot);
+    cyl(0.1,0.09,0.38,5,armC,-0.19,this.lShoulderPivot);  // upper arm
+    cyl(0.08,0.07,0.34,5,skin,-0.55,this.lShoulderPivot);  // forearm
+
+    // ── Right arm ─────────────────────────────────────────────
+    this.rShoulderPivot=new THREE.Group();
+    this.rShoulderPivot.position.set(0.32,1.42,0);
+    g.add(this.rShoulderPivot);
+    cyl(0.1,0.09,0.38,5,armC,-0.19,this.rShoulderPivot);
+    cyl(0.08,0.07,0.34,5,skin,-0.55,this.rShoulderPivot);
+
+    // ── Left leg (hip pivot → knee pivot) ─────────────────────
+    this.lHipPivot=new THREE.Group();
+    this.lHipPivot.position.set(-0.16,0.87,0);
+    g.add(this.lHipPivot);
+    cyl(0.13,0.11,0.44,6,skin,-0.22,this.lHipPivot);  // thigh
+    this.lKneePivot=new THREE.Group();
+    this.lKneePivot.position.y=-0.44;
+    this.lHipPivot.add(this.lKneePivot);
+    cyl(0.1,0.09,0.38,5,sock,-0.19,this.lKneePivot);   // shin / sock
+    // Shoe
+    const lshoe=new THREE.Mesh(new THREE.BoxGeometry(0.17,0.09,0.28),new THREE.MeshPhongMaterial({color:shoe}));
+    lshoe.position.set(0,-0.42,0.06);this.lKneePivot.add(lshoe);
+
+    // ── Right leg ─────────────────────────────────────────────
+    this.rHipPivot=new THREE.Group();
+    this.rHipPivot.position.set(0.16,0.87,0);
+    g.add(this.rHipPivot);
+    cyl(0.13,0.11,0.44,6,skin,-0.22,this.rHipPivot);
+    this.rKneePivot=new THREE.Group();
+    this.rKneePivot.position.y=-0.44;
+    this.rHipPivot.add(this.rKneePivot);
+    cyl(0.1,0.09,0.38,5,sock,-0.19,this.rKneePivot);
+    const rshoe=new THREE.Mesh(new THREE.BoxGeometry(0.17,0.09,0.28),new THREE.MeshPhongMaterial({color:shoe}));
+    rshoe.position.set(0,-0.42,0.06);this.rKneePivot.add(rshoe);
+
+    // ── Jersey accent strip ───────────────────────────────────
+    const stripeMat=new THREE.MeshBasicMaterial({color:this.isHome?0x4fc3f7:0xffab40});
+    const strip=new THREE.Mesh(new THREE.CylinderGeometry(0.285,0.29,0.07,7),stripeMat);
+    strip.position.y=1.35;g.add(strip);
+  }
+
+  setPosition(x,z){
+    this.curX=x;this.curZ=z;
+    this.targetX=x;this.targetZ=z;
+    this.group.position.set(x,0,z);
+  }
+
+  setTarget(x,z){this.targetX=x;this.targetZ=z;}
+
+  update(dt,t){
+    const dx=this.targetX-this.curX,dz=this.targetZ-this.curZ;
+    const dist=Math.sqrt(dx*dx+dz*dz);
+    const moveSpd=9.0;
+    const isMoving=dist>0.4;
+
+    if(isMoving){
+      const step=Math.min(dist,moveSpd*dt);
+      const inv=step/dist;
+      this.curX+=dx*inv;this.curZ+=dz*inv;
+      this.group.position.set(this.curX,0,this.curZ);
+      this.group.rotation.y=Math.atan2(dx,dz);
+      this.speed=step/Math.max(dt,0.001);
+    }else{
+      this.speed=0;
+    }
+
+    // ── Animation ─────────────────────────────────────────────
+    if(isMoving){
+      const freq=2.8;
+      const phase=this.animPhase+t*freq*Math.PI*2;
+      const legAmp=0.75,armAmp=0.35,kneeAmp=0.6;
+
+      this.lHipPivot.rotation.x=Math.sin(phase)*legAmp;
+      this.rHipPivot.rotation.x=Math.sin(phase+Math.PI)*legAmp;
+      this.lShoulderPivot.rotation.x=Math.sin(phase+Math.PI)*armAmp;
+      this.rShoulderPivot.rotation.x=Math.sin(phase)*armAmp;
+
+      // Knee bends when leg swings back
+      this.lKneePivot.rotation.x=Math.max(0,Math.sin(phase+Math.PI*0.3))*kneeAmp;
+      this.rKneePivot.rotation.x=Math.max(0,Math.sin(phase+Math.PI*1.3))*kneeAmp;
+
+      // Slight forward lean
+      this.torso.rotation.x=0.12;
+    }else{
+      // Standing idle — very subtle breathing
+      const breathe=Math.sin(t*1.2+this.animPhase)*0.015;
+      this.lHipPivot.rotation.x=breathe;
+      this.rHipPivot.rotation.x=-breathe;
+      this.lShoulderPivot.rotation.x=-breathe*0.5;
+      this.rShoulderPivot.rotation.x=breathe*0.5;
+      this.lKneePivot.rotation.x=0;
+      this.rKneePivot.rotation.x=0;
+      this.torso.rotation.x=0;
+    }
+  }
+
+  dispose(){scene.remove(this.group);}
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// BUILD / UPDATE PLAYERS
+// ═══════════════════════════════════════════════════════════════════
+function buildPlayers(homeSquad,awaySquad){
+  if(!scene)return;
+  homeFigures.forEach(f=>f.dispose());
+  awayFigures.forEach(f=>f.dispose());
+  homeFigures=[];awayFigures=[];
+
+  const cnt={CB:0,CM:0};
+  homeSquad.forEach(p=>{
+    const c=cnt[p.pos]||0;
+    if(p.pos==='CB'||p.pos==='CM')cnt[p.pos]=(cnt[p.pos]||0)+1;
+    const [px,pz]=getPos3D(p.pos,c);
+    const fig=new PlayerFigure(0x1565c0,true);
+    fig.setPosition(px,pz);
+    homeFigures.push(fig);
+  });
+
+  const cnt2={CB:0,CM:0};
+  awaySquad.forEach(p=>{
+    const c=cnt2[p.pos]||0;
+    if(p.pos==='CB'||p.pos==='CM')cnt2[p.pos]=(cnt2[p.pos]||0)+1;
+    const [px,pz]=getPos3D(p.pos,c);
+    const fig=new PlayerFigure(0xc62828,false);
+    fig.setPosition(px,-pz); // mirror z for away
+    awayFigures.push(fig);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// BALL TARGET
+// ═══════════════════════════════════════════════════════════════════
+function setBallTarget(side,type){
+  let x,z,y=0.6;
+  if(type==='goal'){
+    const s=side==='home'?1:-1;
+    x=(rng()-0.5)*5.8;z=s*(PH-1.5);y=0.8+rng()*1.2;
+  }else if(type==='save'){
+    const s=side==='home'?1:-1;
+    x=(rng()-0.5)*8;z=s*(PH-5);y=1.0+rng()*1.4;
+  }else if(type==='miss'){
+    const s=side==='home'?1:-1;
+    x=(rng()-0.5)*14;z=s*(PH-8)+s*rng()*4;y=0.6+rng()*0.6;
+  }else if(type==='tackle'){
+    x=(rng()-0.5)*44;z=(rng()-0.5)*50;y=0.6;
+  }else{
+    x=(rng()-0.5)*18;z=(rng()-0.5)*30;y=0.6;
+  }
+  ballTarget={x,y,z};
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MOVE PLAYERS TOWARD EVENT CONTEXT
+// ═══════════════════════════════════════════════════════════════════
+function movePlayersForEvent(ev){
+  const side=ev.side;
+  if(side==='home'||side==='away'){
+    const atkFigs=side==='home'?homeFigures:awayFigures;
+    const defFigs=side==='home'?awayFigures:homeFigures;
+    const dir=side==='home'?1:-1;
+
+    if(ev.type==='goal'||ev.type==='save'||ev.type==='miss'){
+      // Attackers push forward into opponent half
+      atkFigs.forEach((f,i)=>{
+        if(i===0){f.setTarget(0,dir*(-46));return;} // GK stays
+        const tx=(rng()-0.5)*38;
+        const tz=dir*(10+rng()*35);
+        f.setTarget(tx,tz);
+      });
+      // Defenders track back toward own half
+      defFigs.forEach((f,i)=>{
+        if(i===0){f.setTarget(0,-dir*47);return;} // GK stays near goal
+        const tx=(rng()-0.5)*30;
+        const tz=-dir*(5+rng()*38);
+        f.setTarget(tx,tz);
+      });
+    }
+  }else{
+    // tackle — mid-pitch battle
+    const bx=ballTarget.x,bz=ballTarget.z;
+    [...homeFigures,...awayFigures].forEach((f,i)=>{
+      if(i===0||i===11)return; // GKs
+      f.setTarget(bx+(rng()-0.5)*20,bz+(rng()-0.5)*16);
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ANIMATE LOOP
+// ═══════════════════════════════════════════════════════════════════
+function animate(time){
+  animFrame=requestAnimationFrame(animate);
+  const dt=Math.min((time-lastTime)*0.001,0.1);
+  const t=time*0.001;
+  lastTime=time;
+
+  // Ball smooth movement
+  if(ballMesh){
+    ballMesh.position.x+=(ballTarget.x-ballMesh.position.x)*0.075;
+    ballMesh.position.y+=(ballTarget.y-ballMesh.position.y)*0.075;
+    ballMesh.position.z+=(ballTarget.z-ballMesh.position.z)*0.075;
+    ballMesh.rotation.x+=0.025;
+    ballMesh.rotation.z+=0.018;
+  }
+
+  // Players
+  homeFigures.forEach(f=>f.update(dt,t));
+  awayFigures.forEach(f=>f.update(dt,t));
+
+  renderer.render(scene,camera);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SQUAD PAGE
+// ═══════════════════════════════════════════════════════════════════
+const POS_XY={GK:{x:50,y:90},LB:{x:18,y:72},CB0:{x:37,y:75},CB1:{x:63,y:75},RB:{x:82,y:72},CDM:{x:50,y:58},CM0:{x:30,y:48},CM1:{x:70,y:48},LW:{x:15,y:28},RW:{x:85,y:28},ST:{x:50,y:18}};
+function posXY2d(pos,c){if(pos==='CB')return POS_XY['CB'+c];if(pos==='CM')return POS_XY['CM'+c];return POS_XY[pos]||{x:50,y:50};}
+function posClass(pos){if(pos==='GK')return'c-gk';if(['CB','RB','LB'].includes(pos))return'c-def';if(['CDM','CM'].includes(pos))return'c-mid';return'c-atk';}
+function posColor2(pos){if(pos==='GK')return'#7b1fa2';if(['CB','RB','LB'].includes(pos))return'#1565c0';if(['CDM','CM'].includes(pos))return'#2e7d32';return'#bf360c';}
+
+let mySquad=null,enemySquad=null;
+function regenSquad(){mySquad=genSq();enemySquad=genSq();renderSquadPage();prepMatch();}
+function updateName(){document.getElementById('navName').textContent=document.getElementById('teamName').value;}
+
+function renderSquadPage(){
+  document.getElementById('playerList').innerHTML=mySquad.map((p,i)=>`
+    <div class="prow" onclick="selPl(${i})" id="pr${i}">
+      <div class="pos-badge ${posClass(p.pos)}">${p.pos}</div>
+      <div class="pinfo"><div class="pname">선수 #${p.id}</div><div class="pnat">${p.nat}</div></div>
+      <div class="tb t-${p.tier}">${p.tier}</div>
+      <div class="prat">${p.rating}</div>
+    </div>`).join('');
+  const cnt2={CB:0,CM:0};
+  document.getElementById('pitch2d').innerHTML=mySquad.map((p,i)=>{
+    const c=cnt2[p.pos]||0;if(p.pos==='CB'||p.pos==='CM')cnt2[p.pos]=(cnt2[p.pos]||0)+1;
+    const xy=posXY2d(p.pos,c);
+    return`<div class="pdot" style="left:${xy.x}%;top:${xy.y}%" onclick="selPl(${i})">
+      <div class="pdot-inner" style="background:${posColor2(p.pos)}">
+        <div class="pdot-pos">${p.pos}</div>
+        <div class="pdot-rat">${p.rating}</div>
+      </div></div>`;
+  }).join('');
+}
+
+function selPl(i){
+  document.querySelectorAll('.prow').forEach((r,j)=>r.classList.toggle('sel',j===i));
+  const p=mySquad[i];
+  const ks=[...(PM[p.pos]||[]),...(PS[p.pos]||[])].slice(0,9);
+  document.getElementById('pdetail').innerHTML=`
+    <h3>선수 #${p.id} <span style="color:#6b8cae;font-weight:400;font-size:0.7rem">${p.pos} · ${p.nat}</span> <span class="tb t-${p.tier}">${p.tier}</span></h3>
+    <div class="dstats">${ks.map(a=>`<div class="ds"><div class="dv">${p.stats[a]??'—'}</div><div class="dk">${a}</div></div>`).join('')}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MATCH PAGE
+// ═══════════════════════════════════════════════════════════════════
+function prepMatch(){
+  if(!mySquad||!enemySquad)return;
+  const hn=document.getElementById('teamName').value||'My Team';
+  document.getElementById('sbH').textContent=hn;
+  document.getElementById('sbA').textContent='Rival FC';
+  document.getElementById('sbHov').textContent='OVR '+ov(mySquad);
+  document.getElementById('sbAov').textContent='OVR '+ov(enemySquad);
+  document.getElementById('sbScr').textContent='0 : 0';
+  buildPlayers(mySquad,enemySquad);
+  ballTarget={x:0,y:0.55,z:0};
+  if(ballMesh)ballMesh.position.set(0,0.55,0);
+}
+
+let spd=1,matchTmr=null,running=false;
+function setSpd(s,btn){spd=s;document.querySelectorAll('.spd-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+
+function startMatch(){
+  if(running)return;
+  if(!mySquad)regenSquad();
+  const hn=document.getElementById('teamName').value||'My Team';
+  const res=simulate(mySquad,enemySquad,hn,'Rival FC');
+
+  document.getElementById('kickBtn').disabled=true;
+  document.getElementById('evList').innerHTML='';
+  document.getElementById('sbScr').textContent='0 : 0';
+  document.getElementById('progFill').style.width='0';
+  document.getElementById('minLbl').textContent="0'";
+  const st=document.getElementById('mStatus');st.className='status st-live';st.textContent='LIVE';
+  document.getElementById('possStat').textContent='';
+  running=true;
+
+  let idx=0,hs=0,as=0;
+  function tick(){
+    if(idx>=res.evs.length){finish(res,hn);return;}
+    const ev=res.evs[idx++];
+    document.getElementById('progFill').style.width=(ev.min/90*100)+'%';
+    document.getElementById('minLbl').textContent=ev.min+"'";
+    setBallTarget(ev.side,ev.type);
+    movePlayersForEvent(ev);
+    if(ev.type==='goal'){if(ev.side==='home')hs++;else as++;document.getElementById('sbScr').textContent=`${hs} : ${as}`;}
+    const feed=document.getElementById('evList');
+    const d=document.createElement('div');
+    d.className=`ev-item ev-${ev.type}`;
+    d.innerHTML=`<span class="ev-min">${ev.min}'</span><span class="ev-desc">${ev.desc}</span>`;
+    feed.insertBefore(d,feed.firstChild);
+    const delay=ev.type==='goal'?1500/spd:ev.type==='save'?700/spd:300/spd;
+    matchTmr=setTimeout(tick,delay);
+  }
+  tick();
+}
+
+function finish(res,hn){
+  running=false;
+  document.getElementById('kickBtn').disabled=false;
+  document.getElementById('progFill').style.width='100%';
+  document.getElementById('minLbl').textContent="90'";
+  const st=document.getElementById('mStatus');st.className='status st-done';
+  const hs=res.hs0,as=res.as0;
+  st.textContent=hs>as?`${hn} 승!`:hs<as?'Rival FC 승!':'무승부';
+  document.getElementById('sbScr').textContent=`${hs} : ${as}`;
+  document.getElementById('possStat').textContent=`점유 ${res.hPoss}% : ${100-res.hPoss}%`;
+  const feed=document.getElementById('evList');
+  const d=document.createElement('div');
+  d.style.cssText='padding:7px 14px;font-size:0.7rem;color:#4fc3f7;font-weight:700;border-bottom:1px solid #1a2e4a';
+  d.textContent=`🏁 FT — ${hs} : ${as}`;
+  feed.insertBefore(d,feed.firstChild);
+  ballTarget={x:0,y:0.55,z:0};
+  enemySquad=genSq();
+  buildPlayers(mySquad,enemySquad);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════════
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id+'Page').classList.add('active');
+  document.querySelectorAll('.tab')[id==='squad'?0:1].classList.add('active');
+  if(id==='match'){setTimeout(()=>{resizeRenderer();prepMatch();},10);}
+}
+
+// INIT
+initThree();
+regenSquad();
+updateName();
+</script>
+</body>
+</html>
