@@ -262,21 +262,17 @@ nav .tab.active{color:#4fc3f7;border-bottom-color:#4fc3f7}
 </div>
 
 <script>
-// ── Engine (same as demo) ─────────────────────────────────────────────────
-const PHASES=30,POSS_SCALE=0.06,CHANCE_SCALE=0.05,MAX_CHANCE=0.72;
-const SHOOT_W=0.005,SHOOT_B=0.25,GK_W=0.007,GK_B=0.20;
+// ── Constants ─────────────────────────────────────────────────────────────
+const PHASES=30;
 const FORMATION=['GK','CB','CB','RB','LB','CDM','CM','CM','RW','LW','ST'];
 const POS_MAIN={GK:['반사 신경','다이빙','핸들링','1대1 방어'],CB:['태클','헤딩','인터셉트','힘'],RB:['속도','태클','크로스','스태미너'],LB:['속도','태클','크로스','스태미너'],CDM:['태클','인터셉트','경기 지능','위치 선정'],CM:['패스','경기 지능','퍼스트 터치','위치 선정'],CAM:['패스','드리블','공간 침투','공격 성향'],RW:['속도','드리블','크로스','민첩성'],LW:['속도','드리블','크로스','민첩성'],ST:['슛 정확도','헤딩','공간 침투','균형 감각']};
 const POS_SEC={GK:['킥 능력','반응 속도','펀칭'],CB:['침착함','균형감각','패스'],RB:['인터셉트','드리블','민첩성'],LB:['인터셉트','드리블','민첩성'],CDM:['팀워크','수비 성향','스태미너'],CM:['킥 능력','공간 침투','체력 회복력'],CAM:['슛 정확도','크로스','위치 선정'],RW:['슛 정확도','퍼스트 터치','가속력'],LW:['슛 정확도','퍼스트 터치','가속력'],ST:['가속도','공격 성향','위치 선정']};
-const GK_S=['반사 신경','다이빙','핸들링','1대1 방어'],DEF_S=['태클','인터셉트','헤딩','힘','위치 선정'],MID_S=['패스','경기 지능','위치 선정','퍼스트 터치','스태미너'],ATK_S=['드리블','속도','공간 침투','민첩성','가속력'],SHT_S=['슛 정확도','공격 성향'];
 const ALL_ATTRS=['1대1 방어','가속력','가속도','경기 지능','공간 침투','공격 성향','균형 감각','균형감각','다이빙','드리블','리더십','민첩성','반사 신경','반응 속도','수비 성향','스태미너','슛 정확도','위치 선정','인터셉트','체력 회복력','침착함','크로스','킥 능력','태클','팀워크','패스','펀칭','퍼스트 터치','핸들링','헤딩','헝가리','힘','속도','점프력'];
 
 function rng(){return Math.random()}
 function ri(a,b){return Math.floor(rng()*(b-a+1))+a}
 function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v))}
 function nr(m,s){let u=0,v=0;while(!u)u=rng();while(!v)v=rng();return m+s*Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
-function sigmoid(d,s){return 0.2+(1/(1+Math.exp(-d*s)))*0.6}
-function s2p(stat,w,b,lo=0.2,hi=0.85){return clamp(stat*w+b,lo,hi)}
 
 const NATIONS=['Argentina','France','Brazil','England','Spain','Germany','Portugal','Italy','Netherlands','Belgium','Croatia','Japan','South Korea','Mexico','Morocco','USA','Colombia','Uruguay','Denmark','Sweden','Poland','Switzerland','Chile','Turkey','Serbia','Australia','Egypt','Nigeria','Iran','Senegal'];
 function randNation(rating){
@@ -308,36 +304,8 @@ function avgStats(players,attrs){
   const v=players.flatMap(p=>attrs.map(a=>p.stats[a]??40));
   return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length*10)/10:50;
 }
-function getStr(players){
-  const gk=players.filter(p=>p.pos==='GK'),def=players.filter(p=>['CB','RB','LB'].includes(p.pos)),mid=players.filter(p=>['CDM','CM','CAM'].includes(p.pos)),atk=players.filter(p=>['RW','LW','ST'].includes(p.pos));
-  return{goalkeeping:avgStats(gk,GK_S),defense:avgStats(def,DEF_S),midfield:avgStats(mid,MID_S),attack:avgStats(atk,ATK_S),shooting:avgStats([...atk,...mid],SHT_S)};
-}
-function overall(players){return Math.round(players.reduce((a,p)=>a+p.rating,0)/players.length*10)/10}
 
-function simulate(h,a,hn,an){
-  const hs=getStr(h),as=getStr(a),events=[];
-  let hs0=0,as0=0,hsh=0,ash=0,hon=0,aon=0,hpc=0;
-  for(let ph=0;ph<PHASES;ph++){
-    const min=ph*3+ri(1,3);
-    const hpp=sigmoid(hs.midfield-as.midfield,POSS_SCALE);
-    let atk,def,an2,dn2,side;
-    if(rng()<hpp){atk=hs;def=as;an2=hn;dn2=an;side='home';hpc++;}
-    else{atk=as;def=hs;an2=an;dn2=hn;side='away';}
-    const ap=atk.attack*0.65+atk.midfield*0.35,dp=def.defense*0.75+def.midfield*0.25;
-    let cp=Math.min(sigmoid(ap-dp,CHANCE_SCALE),MAX_CHANCE);
-    if(rng()>cp){if(rng()<0.3)events.push({min,type:'tackle',side,desc:`🛡️ ${dn2} 수비 차단`});continue;}
-    if(side==='home')hsh++;else ash++;
-    const sp=s2p(atk.shooting,SHOOT_W,SHOOT_B,0.30,0.70);
-    if(rng()>sp){events.push({min,type:'miss',side,desc:`💨 ${an2} 슈팅 빗나감`});continue;}
-    if(side==='home')hon++;else aon++;
-    const gk=s2p(def.goalkeeping,GK_W,GK_B,0.50,0.80);
-    if(rng()>gk){
-      if(side==='home')hs0++;else as0++;
-      events.push({min,type:'goal',side,desc:`⚽ ${an2} 골! (${hs0}-${as0})`});
-    }else{events.push({min,type:'save',side,desc:`🧤 ${dn2} 골키퍼 선방!`});}
-  }
-  return{hs0,as0,hsh,ash,hon,aon,hPoss:Math.round(hpc/PHASES*100),events,hStr:hs,aStr:as};
-}
+function overall(players){return Math.round(players.reduce((a,p)=>a+p.rating,0)/players.length*10)/10}
 
 // ── Position layout on pitch (x%,y%) ─────────────────────────────────────
 const POS_XY={
@@ -453,19 +421,50 @@ function setSpeed(s,btn){
   btn.classList.add('active');
 }
 
-function startMatch(){
+async function startMatch(){
   if(matchRunning)return;
   if(!mySquad)regenSquad();
   const hn=document.getElementById('teamNameInput').value||'My Team';
-  const result=simulate(mySquad,enemySquad,hn,'Rival FC');
 
   document.getElementById('kickoffBtn').disabled=true;
-  document.getElementById('eventsFeed').innerHTML='';
+  document.getElementById('eventsFeed').innerHTML='<div style="color:#6b8cae;padding:8px 16px">경기 시뮬레이션 중...</div>';
   document.getElementById('sbScore').textContent='0 : 0';
   document.getElementById('progressBar').style.width='0';
   document.getElementById('minuteLabel').textContent="0'";
   document.getElementById('matchStatus').className='match-status live';
   document.getElementById('matchStatus').textContent='LIVE';
+
+  let raw;
+  try{
+    const res=await fetch('http://localhost:8000/match/simulate',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        home_team_name:hn,
+        away_team_name:'Rival FC',
+        home_players:mySquad.map(p=>({
+          id:p.id,name:p.name||`Player_${p.id}`,
+          position:p.pos,nationality:p.nation||'Unknown',
+          rating:p.rating,tier:p.tier,stats:p.stats
+        }))
+      })
+    });
+    if(!res.ok)throw new Error(`API ${res.status}`);
+    raw=await res.json();
+  }catch(e){
+    document.getElementById('eventsFeed').innerHTML=
+      `<div style="color:#ef5350;padding:8px 16px">서버 연결 실패: ${e.message}<br><small>백엔드 실행: cd backend && uvicorn api.main:app --reload</small></div>`;
+    document.getElementById('kickoffBtn').disabled=false;
+    return;
+  }
+
+  // API 응답을 기존 렌더링 코드가 기대하는 형식으로 정규화
+  const result={
+    hs0:raw.home_score,
+    as0:raw.away_score,
+    hPoss:Math.round(raw.home_possession),
+    events:raw.events.map(e=>({min:e.minute,type:e.type,side:e.team,desc:e.description}))
+  };
 
   // reset stats
   ['H','A'].forEach(s=>['Shots','On'].forEach(k=>{
@@ -480,7 +479,6 @@ function startMatch(){
   matchRunning=true;
   let idx=0,hScore=0,aScore=0,hSh=0,aSh=0,hOn=0,aOn=0,hPossC=0;
   const allEvents=result.events;
-  const totalPhases=PHASES;
 
   // group events by phase min
   function tick(){
